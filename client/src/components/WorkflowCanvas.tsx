@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -23,6 +23,8 @@ const nodeTypes = {
 
 interface WorkflowCanvasProps {
   onImageUpload?: (file: File) => void;
+  onRunFlow?: (file: File) => void;
+  onRemoveFile?: () => void;
   onAnalysisComplete?: (result: any) => void;
   analysisResult?: any;
   isAnalyzing?: boolean;
@@ -30,6 +32,8 @@ interface WorkflowCanvasProps {
 
 export default function WorkflowCanvas({
   onImageUpload,
+  onRunFlow,
+  onRemoveFile,
   onAnalysisComplete,
   analysisResult,
   isAnalyzing = false,
@@ -39,7 +43,13 @@ export default function WorkflowCanvas({
       id: 'upload-1',
       type: 'upload',
       position: { x: 100, y: 200 },
-      data: { label: 'Upload Image', onImageUpload },
+      data: { 
+        label: 'Upload Image', 
+        onImageUpload,
+        onRunFlow,
+        onRemoveFile,
+        isAnalyzing,
+      },
     },
     {
       id: 'ai-1',
@@ -70,6 +80,56 @@ export default function WorkflowCanvas({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Update nodes when props change
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === 'upload-1') {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              onImageUpload,
+              onRunFlow,
+              onRemoveFile,
+              isAnalyzing,
+            },
+          };
+        } else if (node.id === 'ai-1') {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              isAnalyzing,
+              result: analysisResult,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [onImageUpload, onRunFlow, onRemoveFile, isAnalyzing, analysisResult, setNodes]);
+
+  // Update edges when analyzing state changes
+  useEffect(() => {
+    setEdges((eds) =>
+      eds.map((edge) => {
+        if (edge.id === 'e-upload-ai') {
+          return {
+            ...edge,
+            animated: isAnalyzing,
+            style: { stroke: isAnalyzing ? '#8B5CF6' : '#CBD5E1', strokeWidth: 2 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: isAnalyzing ? '#8B5CF6' : '#CBD5E1',
+            },
+          };
+        }
+        return edge;
+      })
+    );
+  }, [isAnalyzing, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),

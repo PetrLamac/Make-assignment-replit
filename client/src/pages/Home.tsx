@@ -9,10 +9,24 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = (file: File) => {
     console.log('Image uploaded:', file.name);
+    setUploadedFile(file);
+    setAnalysisResult(null);
+    setShowResults(false);
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setAnalysisResult(null);
+    setShowResults(false);
+  };
+
+  const handleRunFlow = async (file: File) => {
+    console.log('Running flow for:', file.name);
     setIsAnalyzing(true);
     setAnalysisResult(null);
     setShowResults(false);
@@ -81,6 +95,8 @@ export default function Home() {
       <div className="flex-1 relative">
         <WorkflowCanvas
           onImageUpload={handleImageUpload}
+          onRunFlow={handleRunFlow}
+          onRemoveFile={handleRemoveFile}
           analysisResult={analysisResult}
           isAnalyzing={isAnalyzing}
         />

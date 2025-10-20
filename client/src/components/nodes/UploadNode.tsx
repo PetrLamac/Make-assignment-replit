@@ -1,7 +1,7 @@
 import { Handle, Position, NodeProps } from 'reactflow';
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileImage } from 'lucide-react';
+import { Upload, X, FileImage, Play } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -38,6 +38,15 @@ export default function UploadNode({ data }: NodeProps) {
   const removeFile = () => {
     setUploadedFile(null);
     setPreview(null);
+    if (data.onRemoveFile) {
+      data.onRemoveFile();
+    }
+  };
+
+  const handleRunFlow = () => {
+    if (uploadedFile && data.onRunFlow) {
+      data.onRunFlow(uploadedFile);
+    }
   };
 
   return (
@@ -87,6 +96,15 @@ export default function UploadNode({ data }: NodeProps) {
             <div className="mt-2 text-xs text-muted-foreground truncate" data-testid="text-filename">
               {uploadedFile.name}
             </div>
+            <Button 
+              className="w-full mt-3" 
+              onClick={handleRunFlow}
+              disabled={data.isAnalyzing}
+              data-testid="button-run-flow"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {data.isAnalyzing ? 'Running...' : 'Run Flow'}
+            </Button>
           </div>
         )}
       </Card>
