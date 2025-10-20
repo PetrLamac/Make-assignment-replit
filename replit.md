@@ -57,9 +57,11 @@ Preferred communication style: Simple, everyday language.
 - Error handling with appropriate HTTP status codes
 
 **Data Storage:**
-- In-memory storage (`MemStorage` class) for analysis results
-- Database-ready schema using Drizzle ORM (PostgreSQL)
+- **Supabase PostgreSQL** for persistent storage of analysis results (as per PRD)
+- Automatic fallback to in-memory storage (`MemStorage`) if Supabase credentials not configured
+- Database-ready schema using Drizzle ORM (PostgreSQL compatible)
 - Schema includes all analysis fields: error details, environment, confidence, etc.
+- **Important:** Only extracted text/JSON metadata is stored, NOT the uploaded images (per PRD requirements)
 
 **Image Processing Flow:**
 1. File validation (type, size)
@@ -82,9 +84,11 @@ Preferred communication style: Simple, everyday language.
 - Timestamp tracking for created records
 
 **Current Implementation:**
-- In-memory storage active (development/testing)
-- Database schema defined and ready for PostgreSQL connection
-- Migration scripts configured in `drizzle.config.ts`
+- **Active:** Supabase PostgreSQL storage for persistent data
+- Storage layer auto-detects Supabase credentials and switches between Supabase/in-memory storage
+- Database schema defined with Drizzle ORM
+- Migration script available at `migrations/0000_modern_purifiers.sql`
+- See `SUPABASE_SETUP.md` for database setup instructions
 
 ### External Dependencies
 
@@ -95,9 +99,11 @@ Preferred communication style: Simple, everyday language.
   - Confidence scoring and severity assessment
 
 **Database Services:**
-- **Neon Database:** Serverless PostgreSQL (configured but not actively used)
-  - Connection via `@neondatabase/serverless` driver
-  - Environment variable: `DATABASE_URL`
+- **Supabase:** PostgreSQL database and backend-as-a-service (actively used)
+  - Connection via `@supabase/supabase-js` SDK
+  - Environment variables: `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+  - Stores analysis metadata (JSON/text only, no image storage per PRD)
+  - Future enhancement path: Supabase Storage for optional image archival
 
 **Frontend Libraries:**
 - **Radix UI:** Headless accessible UI components (30+ primitives)
