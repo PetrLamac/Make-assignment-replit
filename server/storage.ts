@@ -1,5 +1,6 @@
 import { type AnalysisResult, type InsertAnalysisResult } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { SupabaseStorage } from "./supabaseStorage";
 
 export interface IStorage {
   createAnalysisResult(result: InsertAnalysisResult): Promise<AnalysisResult>;
@@ -46,4 +47,14 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use Supabase storage if credentials are available, otherwise fall back to in-memory
+function createStorage(): IStorage {
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+    console.log('[storage] Using Supabase storage');
+    return new SupabaseStorage();
+  }
+  console.log('[storage] Using in-memory storage (Supabase credentials not found)');
+  return new MemStorage();
+}
+
+export const storage = createStorage();
