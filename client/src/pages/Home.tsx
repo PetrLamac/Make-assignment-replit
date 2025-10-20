@@ -2,46 +2,77 @@ import { useState } from 'react';
 import TopNav from '@/components/TopNav';
 import WorkflowCanvas from '@/components/WorkflowCanvas';
 import ResultsPanel from '@/components/ResultsPanel';
+import { useToast } from '@/hooks/use-toast';
+import type { AnalysisResponse } from '@shared/schema';
 
 export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const { toast } = useToast();
 
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = async (file: File) => {
     console.log('Image uploaded:', file.name);
     setIsAnalyzing(true);
     setAnalysisResult(null);
     setShowResults(false);
 
-    setTimeout(() => {
-      const mockResult = {
-        analysis_id: crypto.randomUUID(),
-        status: 'ok',
-        error_title: 'Authentication Failed - Invalid Credentials',
-        error_code: 'AUTH_401',
-        product: 'Customer Dashboard',
-        environment: {
-          os: 'macOS Sonoma',
-          browser: 'Safari 17.2',
-          app: 'Web Portal',
-          version: '4.1.0',
-        },
-        probable_cause: 'authentication_error',
-        suggested_fix: 'Double-check your username and password. Ensure Caps Lock is off. If you\'ve forgotten your password, use the "Forgot Password" link to reset it. Contact support if the issue persists after resetting.',
-        severity: 'high',
-        confidence: 0.94,
-        follow_up_questions: [
-          'Have you recently changed your password?',
-          'Are you able to log in on other devices?',
-          'Is two-factor authentication enabled on your account?',
-        ],
-      };
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-      setIsAnalyzing(false);
-      setAnalysisResult(mockResult);
+      const response = await fetch('/api/v1/analyze-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      setAnalysisResult(result);
       setShowResults(true);
-    }, 2500);
+
+      if (result.status === 'ok') {
+        toast({
+          title: "Analysis complete",
+          description: `Successfully analyzed: ${result.error_title}`,
+        });
+      } else {
+        toast({
+          title: "Analysis failed",
+          description: result.reason || "Unable to analyze the image",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to analyze the image. Please try again.",
+        variant: "destructive",
+      });
+      
+      setAnalysisResult({
+        analysis_id: crypto.randomUUID(),
+        status: 'failed',
+        error_title: 'Upload Failed',
+        error_code: null,
+        product: null,
+        environment: null,
+        reason: error instanceof Error ? error.message : 'Unknown error',
+        probable_cause: 'unknown',
+        suggested_fix: 'Please check your connection and try again.',
+        severity: 'low',
+        confidence: 0,
+        follow_up_questions: [],
+      });
+      setShowResults(true);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (

@@ -22,12 +22,63 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/v1/analyze-image - Analyze an error screenshot
-  app.post("/api/v1/analyze-image", upload.single('file'), async (req, res) => {
+  app.post("/api/v1/analyze-image", 
+    (req, res, next) => {
+      upload.single('file')(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+          // Multer-specific errors (file size, field count, etc.)
+          return res.status(400).json({
+            analysis_id: crypto.randomUUID(),
+            status: "failed",
+            reason: err.code === 'LIMIT_FILE_SIZE' 
+              ? 'File size exceeds 15MB limit. Please upload a smaller image.'
+              : `Upload error: ${err.message}`,
+            error_title: "Upload Failed",
+            error_code: null,
+            product: null,
+            environment: null,
+            probable_cause: "invalid_input",
+            suggested_fix: "Please ensure your image is under 15MB and try again.",
+            severity: "low",
+            confidence: 0,
+            follow_up_questions: [],
+          });
+        } else if (err) {
+          // File filter or other errors
+          return res.status(400).json({
+            analysis_id: crypto.randomUUID(),
+            status: "failed",
+            reason: err.message || 'Invalid file type. Only PNG and JPEG images are allowed.',
+            error_title: "Invalid File Type",
+            error_code: null,
+            product: null,
+            environment: null,
+            probable_cause: "invalid_input",
+            suggested_fix: "Please upload a PNG or JPEG image file.",
+            severity: "low",
+            confidence: 0,
+            follow_up_questions: [],
+          });
+        }
+        next();
+      });
+    },
+    async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
+          analysis_id: crypto.randomUUID(),
           status: "failed",
           reason: "No file uploaded. Please upload a PNG or JPEG image.",
+          error_title: "No File",
+          error_code: null,
+          product: null,
+          environment: null,
+          probable_cause: "invalid_input",
+          suggested_fix: "Please select an image file to upload.",
+          severity: "low",
+          confidence: 0,
+          follow_up_questions: [],
         });
       }
 

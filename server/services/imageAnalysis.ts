@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { AnalysisResponse } from "@shared/schema";
+import { analysisResponseSchema, type AnalysisResponse } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -71,22 +71,32 @@ Important:
     // Generate analysis ID
     const analysisId = crypto.randomUUID();
 
-    // Construct the final response
-    const analysisResponse: AnalysisResponse = {
+    // Construct and validate the response
+    const candidateResponse = {
       analysis_id: analysisId,
       error_title: parsedResult.error_title || "Unknown Error",
       error_code: parsedResult.error_code || null,
       product: parsedResult.product || null,
       environment: parsedResult.environment || null,
       probable_cause: parsedResult.probable_cause || "unknown",
-      suggested_fix: parsedResult.suggested_fix?.slice(0, 500) || "No fix suggestion available",
+      suggested_fix: (parsedResult.suggested_fix || "No fix suggestion available").slice(0, 500),
       severity: parsedResult.severity || "medium",
       confidence: Math.min(1, Math.max(0, parsedResult.confidence || 0.5)),
-      follow_up_questions: (parsedResult.follow_up_questions || []).slice(0, 3),
-      status: "ok",
+      follow_up_questions: Array.isArray(parsedResult.follow_up_questions) 
+        ? parsedResult.follow_up_questions.slice(0, 3)
+        : [],
+      status: "ok" as const,
     };
 
-    return analysisResponse;
+    // Validate against schema
+    const validationResult = analysisResponseSchema.safeParse(candidateResponse);
+    
+    if (!validationResult.success) {
+      console.error("OpenAI response validation failed:", validationResult.error);
+      throw new Error("Invalid response format from AI model");
+    }
+
+    return validationResult.data;
   } catch (error) {
     console.error("Error analyzing image:", error);
     
