@@ -1,0 +1,69 @@
+# PRD — Make.com AI Image Analyzer (Lovable prototype) v0.1
+
+## 0) Summary
+
+Build a **standalone Lovable micro‑service** that accepts an **image upload** (≤15 MB, English screenshots) and returns **structured JSON** with extracted error information for **customer support triage**. No image storage; only extracted text/metadata stored in **Supabase**. Designed to be callable from Make.com (HTTP module) and help desks (Zendesk/Jira) via mapping. Provider: **OpenAI Vision LLM**.
+
+---
+
+## 1) Goals & Non‑Goals
+
+**Goals (v1)**
+
+* Extract actionable info from a screenshot of an error and return a stable JSON object usable in Make mappings.
+* Provide concise **suggested fix** (≤500 chars) and a **probable cause** classification.
+* Optionally output **key OCR text blocks** with coordinates.
+* Support **optional PII redaction** in the returned preview without persisting images.
+* Log only **extracted text/JSON** into Supabase for analytics and improvement.
+
+**Non‑Goals (v1)**
+
+* Multi‑page documents (PDFs), videos, or GIF frames.
+* Non‑English OCR.
+* Long‑term image storage or dataset building from images.
+* Fine‑tuning or custom model training.
+
+---
+
+## 2) Users & JTBD
+
+**Primary user:** Customer support agent (SaaS/B2B context) performing ticket triage.
+
+**Job-to-be-done:** When a customer sends a screenshot of an error, the agent needs **a quick, reliable summary** of the error code, context (product, environment), likely cause, and a short fix to speed up resolution or correct routing.
+
+**Success indicators:**
+
+* ≥85% of analyzed screenshots rated “useful” by agents.
+
+## 3) Scope (v1 Feature List)
+
+* **Endpoint:** `POST /v1/analyze-image` (multipart/form-data; single file input `file`).
+
+* **Image types:** `image/png`, `image/jpeg` (extensions: .png, .jpg, .jpeg). Max size **15 MB**.
+
+* **LLM:** OpenAI Vision model (e.g., GPT‑4o family or successor) for OCR+vision reasoning.
+
+* **Output JSON fields:**
+
+  * `error_title` (string) — short human-readable title
+  * `error_code` (string|null)
+  * `product` (string|null)
+  * `environment` (object|null) with optional keys `{ os, browser, app, version }`
+  * `key_text_blocks` (array of `{ text, bbox: [x,y,w,h], confidence }`) — optional
+  * `probable_cause` (string; from taxonomy below)
+  * `suggested_fix` (string; ≤ 500 chars)
+  * `severity` ("low" | "medium" | "high")
+  * `confidence` (0..1)
+  * `follow_up_questions` (array of strings; 0–3)
+  * `analysis_id` (string UUID)
+  * `status` ("ok"|"failed") and `reason` if failed
+
+* **Taxonomy (probable_cause):** `network_error | authentication_error | permission_denied | timeout | not_found | rate_limit | invalid_input | server_error | dependency_down | unknown`.
+
+* **No image storage**. 
+
+* **Persistence:** store extracted JSON/text in Supabase.
+
+---
+
+## &#x20;
