@@ -12,11 +12,36 @@ This is the proper migration approach using your existing Drizzle migration file
 
 #### 1. Get your Supabase database connection string:
 
-1. Go to your **Supabase Project Settings** → **Database**
-2. Scroll to **Connection String** section
-3. Select the **URI** tab
-4. Copy the connection string (it looks like: `postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres`)
-5. **Replace `[YOUR-PASSWORD]`** with your actual database password
+**Step 1: Go to your Supabase project dashboard**
+- Visit https://supabase.com/dashboard
+- Select your project
+
+**Step 2: Click the "Connect" button**
+- You'll see a **green "Connect" button** at the top of the page
+- Click it to open a popup
+
+**Step 3: Select "Transaction pooler"**
+- In the popup, you'll see connection options
+- Choose **"Transaction pooler"** (recommended for this app)
+- The connection string will look like:
+  ```
+  postgresql://postgres.xxxxx:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+  ```
+
+**Step 4: Replace `[YOUR-PASSWORD]` with your actual password**
+- Find where it says `[YOUR-PASSWORD]` in the connection string
+- Replace that entire text (including the brackets) with your database password
+- **Don't have your password?** 
+  - Go to **Settings** → **Database** in the sidebar
+  - Click **"Reset Database Password"** to create a new one
+  - Copy the new password and use it in the connection string
+
+**Example:**
+```
+Before: postgresql://postgres.abc123:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+
+After:  postgresql://postgres.abc123:MyActualPassword123@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+```
 
 #### 2. Add the connection string to Replit Secrets:
 
