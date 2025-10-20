@@ -38,10 +38,10 @@ export const analysisResponseSchema = z.object({
   error_code: z.string().nullable(),
   product: z.string().nullable(),
   environment: z.object({
-    os: z.string().optional(),
-    browser: z.string().optional(),
-    app: z.string().optional(),
-    version: z.string().optional(),
+    os: z.string().nullable().optional(),
+    browser: z.string().nullable().optional(),
+    app: z.string().nullable().optional(),
+    version: z.string().nullable().optional(),
   }).nullable(),
   probable_cause: z.enum([
     'network_error',
