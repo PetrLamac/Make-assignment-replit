@@ -4,9 +4,40 @@ Your application is now configured to use Supabase! The server log shows `[stora
 
 ## Step 1: Create the Database Table
 
-You need to run the SQL migration to create the `analysis_results` table in your Supabase database.
+You need to run the migration to create the `analysis_results` table in your Supabase database.
 
-### How to run the migration:
+### Option A: Using Drizzle Kit (Recommended)
+
+This is the proper migration approach using your existing Drizzle migration file.
+
+#### 1. Get your Supabase database connection string:
+
+1. Go to your **Supabase Project Settings** → **Database**
+2. Scroll to **Connection String** section
+3. Select the **URI** tab
+4. Copy the connection string (it looks like: `postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres`)
+5. **Replace `[YOUR-PASSWORD]`** with your actual database password
+
+#### 2. Add the connection string to Replit Secrets:
+
+1. In Replit, go to the **Secrets** tool (🔒 in the sidebar)
+2. Add a new secret:
+   - Key: `DATABASE_URL`
+   - Value: Your Supabase connection string from step 1
+
+#### 3. Run the migration:
+
+```bash
+npx drizzle-kit push
+```
+
+This will create the `analysis_results` table with RLS disabled automatically.
+
+---
+
+### Option B: Manual SQL (Fallback)
+
+If you prefer to run the SQL manually:
 
 1. **Go to your Supabase project dashboard** at https://supabase.com/dashboard
 2. **Select your project**
